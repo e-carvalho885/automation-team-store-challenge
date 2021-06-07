@@ -35,10 +35,10 @@ Agora vamos executar o sistema localmente:
 
 ```
 - Clone o respositório
-https://github.com/edcarlosneves/reynolds-number-calculator
+https://github.com/edcarlos-neves/automation-team-store-challenger
 
 - Entre na pasta reynolds-number-calculator
-cd reynolds-number-calculator
+cd automation-team-store-challenger
 
 - Execute o comando do Docker
 make docker_build
