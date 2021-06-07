@@ -1,0 +1,76 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: headloss@10
+      POSTGRES_USER: headloss
+      POSTGRES_DB: headloss
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+  rabbitmq:
+    image: 'rabbitmq:alpine'
+    ports:
+      - 5672:5672
+  api:
+    build:
+      context: .
+    environment:
+      SQL_HOST: db
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: always
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+      - celery
+      - celery-beat
+      - mailhog
+  celery:
+    build: .
+    command: celery -A core worker -l info
+    restart: always
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+      - rabbitmq
+  celery-beat:
+    build: .
+    command: celery -A core beat -l info
+    restart: always
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+      - rabbitmq
+  mailhog: # service for faking a SMTP server
+    image: mailhog/mailhog
+    restart: always
+    ports:
+      - '1025:1025' # smtp server
+      - '8025:8025' # web ui
+  flower:
+    image: mher/flower:0.9.5
+    restart: always
+    command:
+      [
+        'flower',
+        '--address=0.0.0.0',
+        '--broker=amqp://guest:guest@rabbitmq:5672/',
+        '--port=5555',
+        '--logging=DEBUG',
+      ]
+    ports:
+      - 5555:5555
+    depends_on:
+      - rabbitmq
+
+volumes:
+  db_data:

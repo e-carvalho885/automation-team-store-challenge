@@ -1,103 +1,225 @@
-# Automation Team - Technical Challenge
+# Reynolds Number Calculator
 
----
+## 1. Proposta
 
-# Greetings
+Este projeto trata-se de uma calculadora que tem o objetivo de retornar para o usuário os valores do Número de Reynolds e do regime de escoamento do fluido, recebendo como entradas Viscosidade Cinemática `(Kinematic Viscosity (St))`, Diâmetro da Tubulação `(Pipe Diameter (m))`, Vazão Volumétrica do Fluído `(Volumetric Flow Rate (m3/s))`
 
-Thank you to take part on this technical challenge! We designed it to be pragmatic, convenient, low friction and to also provide useful value to you - taking into account you have given your best, we will honor your efforts and evaluate your job providing useful, respectful and meaningful feedback - using a code review to do that.
+## 2. Ferramentas/Tecnologias Utilizadas
 
----
+- Python
+- Django
+- Django Rest Framework
+- RabbitMQ
+- MailHog
+- PostgreSQL
+- Celery
+- Flower
+- React
+- Docker
+- Docker Compose
+- Git
+- Ubuntu Server 20.04
 
-# Instructions
+## 3. Como Executar o projeto Localmente
 
-You have 2 ways you can show us the best you can do: the first is the freedom for you to choose from your github projects' portfolio. The second is a challenge that we propose, if you feel more inclined to that. Choose the one which is most convenient to you, given your time availability restrictions. No matter the one you choose, the criteria we will use to evaluate will be the same. After you decide which one is the best to you, answer the e-mail telling us what option you will choose and when you will deliver the test to our evaluation (we believe it can be delivered in less than and at maximum 7 days).
+Para executar esse projeto, é necessário ter o Docker + Docker Compose instalados na máquina. Instruções aqui: https://docs.docker.com/engine/install/
 
-## OPTION 1: YOU CHOOSE WHAT TO SHOW US
+Também é recomendado ter o make instalado na máquina para a execução do comando do arquivo Makefile. Para instalar no ubuntu e derivados, siga o seguinte passo:
 
-### Steps
+```
+sudo apt update
+sudo apt install make
+```
 
-1) Choose an existing project from a github repository of yours. This project must use a python web framework (django, flask, etc...), and provide at least a database. The more tools it provides, e.g. Redis, Celery tasks, etc..., the better for us to evaluate what you're capable to deliver.
+Agora vamos executar o sistema localmente:
 
-2) Write a great README, explaining the problem domain you're solving with the project, its' scope and any useful "business" requirement that must be taken into account.
+```
+- Clone o respositório
+https://github.com/edcarlos-neves/automation-team-store-challenger
 
-3) Provide a way for us to run your application locally with all of its' requirements (python and infrastructure-wide). An alternative is to host it somewhere we can interact with the API and frontend. It would be great to document the steps required to that on the README. ;)
+- Entre na pasta reynolds-number-calculator
+cd automation-team-store-challenger
 
-4) If you decide to make enhancements to the existing project, that will be awesome. E.g.: requirements updates, fixes to the test suite due to the updates, writing new tests, enhancing existing project documentation... all of that will raise even more our interest. To make it easy for us to track those enhancements, we ask you to open a new branch on the project and create a Pull Request, and to send us the link to it so that we can evaluate.
+- Execute o comando do Docker
+make docker_build
 
-5) If you opt not to make any enhancement to the existing project, that is also valid - since you follow steps 1 to 3. ;)
+- Crie o primeiro usuário
+make docker_create_admin_user
 
-### Tips
+- Vá em localhost:8000 onde você vai encontrar a interface web
+```
 
-- Choose the repository wisely - the one you are most technically proud of is a good metric to show us your best work. ;)
+## 4. Endpoints da API
 
-- We will trust you to our hearts that the work you deliver is yours, and it reflects the best of you. =D
+### 4.1. Análises
 
-- You are expected to **be able to explain to us your project problem domain and its' architecture** when you go the video interview. Any code suggestions and doubts we have we will make directly into your code, in a code review format, so that we can have a practical conversation and feedback cycle. So, prepare yourself accordingly. ;)
+#### Obter todas as análises (Retorna todas as análises)
 
+```
+GET api/analysis/
+Headers:
+	Authorization: Bearer + Token
+Retorna:
+[
+   {
+      "id":124,
+      "reynolds_number":12732.395447351628,
+      "reynolds_number_regime":"turbulent",
+      "viscosity":1.0,
+      "diameter":2.0,
+      "flow":2.0,
+      "creator":1
+   },
+   {
+      "id":122,
+      "reynolds_number":128.3939036707727,
+      "reynolds_number_regime":"laminar",
+      "viscosity":85.0,
+      "diameter":7.0,
+      "flow":6.0,
+      "creator":1
+   }
+]
+```
 
-## OPTION 2: OUR CHALLENGE TO YOU
+#### Obter uma análise específica
 
-### Specification
+```
+GET api/analysis/{analysis_id}
+Headers:
+	Authorization: Bearer + Token
+Retorna:
+{
+   "id":119,
+   "reynolds_number":6701.260761764015,
+   "reynolds_number_regime":"turbulent",
+   "viscosity":19.0,
+   "diameter":0.1,
+   "flow":1.0,
+   "creator":1
+}
+```
 
-- As a business requirement, choose a fashion-related resource. E.g. shoes, pants, shirts, etc...
+#### Atualizar uma análise específica
 
-- Create a RESTful JSON API to expose CRUD (Create/Retrieve/Update/Delete) operations on this resource.
+```
+PUT api/analysis/{analysis_id}
+Headers:
+	Authorization: Bearer + Token
+Body:
+{
+   "viscosity":19,
+   "diameter":0.1,
+   "flow":0.01
+}
+Retorna:
+{
+   "id":119,
+   "reynolds_number":6701.260761764015,
+   "reynolds_number_regime":"turbulent",
+   "viscosity":19.0,
+   "diameter":0.1,
+   "flow":1.0,
+   "creator":1
+}
+```
 
-- Create a frontend to the API. You are free to do that server-side, e.g. with Django Admin, or client side with a frontend framework of your choice.
+#### Deletar uma análise específica
 
-- Provide a way for us to run your application locally with all of its' requirements (python and infrastructure-wide). An alternative is to host it somewhere we can interact with the API and frontend. It would be great to document the steps required to that on the README. ;)
+```
+DELETE api/analysis/{analysis_id}
+Headers:
+	Authorization: Bearer + Token
+Retorna:
+[]
+```
 
-- Optional requirement: Create an endpoint to populate data into the model/table using a CSV file. One of the fields of the model/table must have its' value calculated based on 1 or more of the other ones.
+#### Criar uma nova análise
 
-### Steps
+```
+POST api/analysis/
+Headers:
+	Authorization: Bearer + Token
+Body:
+{
+   "viscosity":19,
+   "diameter":0.1,
+   "flow":0.01
+}
+Retorna:
+{
+   "id":119,
+   "reynolds_number":6701.260761764015,
+   "reynolds_number_regime":"turbulent",
+   "viscosity":19.0,
+   "diameter":0.1,
+   "flow":1.0,
+   "creator":1
+}
+```
 
-- Fork this repository into your personal github account. All the work must be done on your personal forked repository. We will trust you to our hearts not to take "inspiration" from other available forks. ;)
+### 4.2. Autenticação
 
-- Create a branch from `master` (e.g. `develop`) and do all of your magic on this created branch ;)
+Todas as chamadas da API precisam serem autenticadas. Para obter o token de autenticação, vá no seguinte endpoint:
 
-- Code (and document) up
+```
+POST /api/token/
+Body:
+{
+   "username":  "username",
+   "password":  "password"
+}
+Retorna:
+{
+   "refresh":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYyMzExMzQzNSwianRpIjoiY2FlY2I1YmQ2MDUyNDRiZDg1ZmZiMTcwNjU2MjYxMGMiLCJ1c2VyX2lkIjoxfQ.-RIqQr_Gbw0Z0g5VVJkIfR6E_CNnUNo-MqwaNuiq0DM",
+   "access":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjIzNjMxODM1LCJqdGkiOiIwZmFkMTdhZDk1OWI0NjM2OWU0MjliODQyZWVlYzNhOSIsInVzZXJfaWQiOjF9.xBVNXv5MVfPTQKahCvcxQAdHqo3Y9lbUkSTMXgikYrc"
+}
+```
 
-- When finished, create a Pull Request from the created branch to master
+Obs.: No header, você precisa passar `access` como `token` (Authorization: Bearer + Token `(access)`)
 
-- Send an email to us with the Pull Request link on your personal forked repository - NOT on this repository. That way we can request access to review it and provide you feedback.
+## 5. Funcionalidades
 
+### 5.1 - Envio de email a cada análise criada
 
----
+Para cada análise criada, um email é enviado. Este envio é assíncrono usando (Celery + RabbitMQ + Flower). O envio do email é simulado usando o MailHog.
 
-## What will be evaluated
+- Para acessar ao MailHog: vá em http://localhost:8025/
+- Para acessar o flower, vá em http://localhost:5555/dashboard
 
-- Your understanding and conformity to the business specification
+### 5.2 Front-end em React para testes
 
-- Your development workflow
+O sistema tem um front-end feito em react para que os testes possam ser feitos.
 
-- How you architecture the solution using python
+- Para acessar o front-end, vá em http://localhost:8000/
+- Para logar no sistema utilize o usuário que você criou no passo 3
 
-- Data sanitization and validation
+### 5.3 Download de todas as análises em CSV pelo painel do admin
 
-- API documentation
+É possível fazer uma seleção de análise e fazer o download destas pelo painel do admin
 
-- Project documentation: the business specification, the project structure/architecture, instructions to run your solution locally on an Ubuntu 18.04+ machine - or on a working remote environment it was deployed to. Feel free to add any other relevant information.
+- Para logar painel do admin vá em http://localhost:8000/admin/
+- Para ver a análises, vá em http://localhost:8000/admin/analysis/analysis/
+- Selecione as análises
+- Em actions, selecione Export to CSV, clique em go e escolha o local onde quer baixar
 
-- Automated tests
+### 5.4 Documentação
 
-- Code consistency (through automated formatters, linters, etc...)
+- Para acessar a documentação, vá em http://localhost:8000/docs/
 
----
+## 6. Sistema para testes
 
-## **You will stand out from the crowd if**:
+- Para facilitar os testes, o sistema está disponível em: http://143.198.119.27:8000/ (basta usar cada endpoint)
+- Para logar no sistema, utilize as seguintes credenciais:
 
-- You handle the documentation with love and care (attention to details is a HUGE seller here)
+```
+  "username": "admin",
+  "password": "admin@3123"
+```
 
-- The frontend consumes ALL the backend API endpoints of the resource, and even more if it provides ways to search for contents.
+- Para acessar ao MailHog: vá em http://143.198.119.27:8025/
+- Para acessar o flower, vá em http://143.198.119.27:5555/dashboard
 
-- You use Docker - so we can run your application easily locally.
+## 7. Execução dos testes
 
-- If you deploy the application somewhere remotely where we can interact with it (then we won't try to run it locally and dedicate more time to the evaluation process).
-
----
-
-## Frameworks, databases and other tooling
-
-In our team we architecture applications with microservices in mind. All new applications (and nowadays the majority of them) are developed on python 3.8+, django or flask, postgres as the database, redis as cache and celery/rabbitmq when we need to deal with processing/flows too long to finish on a request-response cycle. We package our applications as docker images and deploy with kubernetes using helm charts. But feel free to use frameworks, databases and tooling you are most familiar with.
-
-
+Para executar os testes, dê o seguinte comando: `make docker_test`
